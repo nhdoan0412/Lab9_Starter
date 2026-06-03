@@ -88,20 +88,245 @@
   </main>
 
   <script>
+    /*
+      Custom error class.
+      This extends the built-in Error object, so we can create
+      calculator-specific errors and identify them later with instanceof.
+    */
+    class CalculatorError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = 'CalculatorError';
+      }
+    }
+
+    /*
+      Another custom error class for DOM-related problems.
+      This is useful because client-side JS often fails when an expected
+      element does not exist in the page.
+    */
+    class MissingElementError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = 'MissingElementError';
+      }
+    }
+
+    /*
+      Global error handler.
+      This catches errors that happen outside a try/catch block.
+    */
+    window.onerror = function (message, source, lineno, colno, error) {
+      console.error('Global error caught by window.onerror');
+      console.error('Message:', message);
+      console.error('Source:', source);
+      console.error('Line:', lineno);
+      console.error('Column:', colno);
+      console.error('Error object:', error);
+
+      return false;
+    };
+
+    /*
+      Another way to catch global errors.
+      The lab says this is optional, but it is useful to show understanding.
+    */
+    window.addEventListener('error', event => {
+      console.log('Global error caught by window.addEventListener("error")');
+      console.log('Error message:', event.message);
+    });
+
+    function getElementOrThrow(selector) {
+      const element = document.querySelector(selector);
+
+      if (!element) {
+        throw new MissingElementError(`Could not find element: ${selector}`);
+      }
+
+      return element;
+    }
+
+    function calculate(firstNum, operator, secondNum) {
+      const num1 = Number(firstNum);
+      const num2 = Number(secondNum);
+
+      if (firstNum.trim() === '' || secondNum.trim() === '') {
+        throw new CalculatorError('Both number inputs are required.');
+      }
+
+      if (Number.isNaN(num1) || Number.isNaN(num2)) {
+        throw new CalculatorError('Both inputs must be valid numbers.');
+      }
+
+      if (operator === '/' && num2 === 0) {
+        throw new CalculatorError('Cannot divide by zero.');
+      }
+
+      switch (operator) {
+        case '+':
+          return num1 + num2;
+        case '-':
+          return num1 - num2;
+        case '*':
+          return num1 * num2;
+        case '/':
+          return num1 / num2;
+        default:
+          throw new CalculatorError(`Unsupported operator: ${operator}`);
+      }
+    }
+
     let form = document.querySelector('form');
+
     form.addEventListener('submit', e => {
       e.preventDefault();
+
       let output = document.querySelector('output');
-      let firstNum = document.querySelector('#first-num').value;
-      let secondNum = document.querySelector('#second-num').value;
-      let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+      try {
+        let firstNum = getElementOrThrow('#first-num').value;
+        let secondNum = getElementOrThrow('#second-num').value;
+        let operator = getElementOrThrow('#operator').value;
+
+        let result = calculate(firstNum, operator, secondNum);
+
+        output.textContent = result;
+        console.log('Calculation successful:', result);
+      } catch (error) {
+        output.textContent = error.message;
+
+        if (error instanceof CalculatorError) {
+          console.error('Calculator error:', error.message);
+        } else if (error instanceof MissingElementError) {
+          console.error('DOM error:', error.message);
+        } else {
+          console.error('Unexpected error:', error);
+        }
+      } finally {
+        console.log('Calculator submit attempt finished.');
+      }
     });
 
     let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
 
     // Start your code here
     // You may move this JS to another file if you wish
+
+    const sampleUser = {
+      name: 'Nhan Doan',
+      class: 'CSE 110',
+      lab: 'Lab 9',
+      topic: 'JavaScript Error Handling'
+    };
+
+    const sampleTableData = [
+      {
+        method: 'console.log',
+        purpose: 'Print normal debugging information'
+      },
+      {
+        method: 'console.error',
+        purpose: 'Print error messages'
+      },
+      {
+        method: 'console.table',
+        purpose: 'Display array/object data as a table'
+      }
+    ];
+
+    function firstTraceFunction() {
+      secondTraceFunction();
+    }
+
+    function secondTraceFunction() {
+      thirdTraceFunction();
+    }
+
+    function thirdTraceFunction() {
+      console.trace('Console trace demo: this shows the function call stack.');
+    }
+
+    errorBtns[0].addEventListener('click', () => {
+      console.log('Console Log Demo');
+      console.log('This is a normal debugging message.');
+      console.log(sampleUser);
+    });
+
+    errorBtns[1].addEventListener('click', () => {
+      console.error('Console Error Demo');
+      console.error('This simulates an error message in the console.');
+    });
+
+    errorBtns[2].addEventListener('click', () => {
+      console.count('Console Count Demo');
+      console.count('Console Count Demo');
+      console.count('Console Count Demo');
+    });
+
+    errorBtns[3].addEventListener('click', () => {
+      console.warn('Console Warn Demo');
+      console.warn('This is a warning. The app still runs, but something may need attention.');
+    });
+
+    errorBtns[4].addEventListener('click', () => {
+      console.assert(2 + 2 === 4, 'This message will not appear because the assertion is true.');
+      console.assert(2 + 2 === 5, 'Console Assert Demo: this appears because the assertion is false.');
+    });
+
+    errorBtns[5].addEventListener('click', () => {
+      console.clear();
+      console.log('Console was cleared.');
+    });
+
+    errorBtns[6].addEventListener('click', () => {
+      const formElement = document.querySelector('form');
+      console.dir(formElement);
+    });
+
+    errorBtns[7].addEventListener('click', () => {
+      const mainElement = document.querySelector('main');
+      console.dirxml(mainElement);
+    });
+
+    errorBtns[8].addEventListener('click', () => {
+      console.group('Console Group Demo');
+      console.log('This is the first message inside the group.');
+      console.log('This is the second message inside the group.');
+      console.warn('This warning is also inside the group.');
+      console.error('This error is also inside the group.');
+    });
+
+    errorBtns[9].addEventListener('click', () => {
+      console.log('Ending the current console group.');
+      console.groupEnd();
+    });
+
+    errorBtns[10].addEventListener('click', () => {
+      console.table(sampleTableData);
+    });
+
+    errorBtns[11].addEventListener('click', () => {
+      console.time('Timer Demo');
+      console.log('Timer started. Click "End Timer" to stop it.');
+    });
+
+    errorBtns[12].addEventListener('click', () => {
+      console.timeEnd('Timer Demo');
+    });
+
+    errorBtns[13].addEventListener('click', () => {
+      firstTraceFunction();
+    });
+
+    errorBtns[14].addEventListener('click', () => {
+      console.log('About to trigger a global error.');
+
+      /*
+        This intentionally causes an uncaught global error.
+        It is not inside a try/catch block, so window.onerror should catch it.
+      */
+      nonExistentFunctionForGlobalErrorDemo();
+    });
   </script>
 </body>
 
